@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[site]
+  id = "74f17440-c081-4775-b256-89fc06a1a6bb"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
