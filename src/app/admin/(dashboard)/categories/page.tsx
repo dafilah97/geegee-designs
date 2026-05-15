@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag, Plus, Settings } from "lucide-react";
+import { Tag, Plus, Settings, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +9,7 @@ export default function AdminCategories() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -30,16 +31,41 @@ export default function AdminCategories() {
     if (!name || !slug) return;
     setIsSubmitting(true);
     
-    const { error } = await supabase.from('categories').insert([{ name, slug }]);
+    if (editingCategory) {
+      const { error } = await supabase.from('categories').update({ name, slug }).eq('id', editingCategory.id);
+      if (!error) {
+        setEditingCategory(null);
+        setName("");
+        setSlug("");
+        fetchCategories();
+      } else {
+        alert("Error updating category: " + error.message);
+      }
+    } else {
+      const { error } = await supabase.from('categories').insert([{ name, slug }]);
+      if (!error) {
+        setName("");
+        setSlug("");
+        fetchCategories();
+      } else {
+        alert("Error adding category: " + error.message);
+      }
+    }
     
     setIsSubmitting(false);
-    if (!error) {
-      setName("");
-      setSlug("");
-      fetchCategories();
-    } else {
-      alert("Error adding category: " + error.message);
-    }
+  };
+
+  const openEditCategory = (cat: any) => {
+    setEditingCategory(cat);
+    setName(cat.name);
+    setSlug(cat.slug);
+  };
+
+  const deleteCategory = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this category? This might affect products in this category.")) return;
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (!error) fetchCategories();
+    else alert("Error deleting category: " + error.message);
   };
 
   return (
@@ -51,7 +77,7 @@ export default function AdminCategories() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-medium mb-4">Add New Category</h2>
+            <h2 className="text-lg font-medium mb-4">{editingCategory ? "Edit Category" : "Add New Category"}</h2>
             <form onSubmit={handleAddCategory} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Category Name</label>
@@ -61,9 +87,16 @@ export default function AdminCategories() {
                 <label className="text-sm font-medium text-gray-700">Slug</label>
                 <input required type="text" value={slug} readOnly className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-black focus:border-black bg-gray-50" placeholder="summer-collection" />
               </div>
-              <button disabled={isSubmitting} type="submit" className="w-full bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50">
-                {isSubmitting ? "Saving..." : "Save Category"}
-              </button>
+              <div className="flex gap-2">
+                {editingCategory && (
+                  <button type="button" onClick={() => { setEditingCategory(null); setName(""); setSlug(""); }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50">
+                    Cancel
+                  </button>
+                )}
+                <button disabled={isSubmitting} type="submit" className="flex-[2] bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50">
+                  {isSubmitting ? "Saving..." : (editingCategory ? "Update" : "Save Category")}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -89,9 +122,14 @@ export default function AdminCategories() {
                       {cat.slug}
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <button className="text-gray-400 hover:text-black transition-colors">
-                        <Settings className="w-4 h-4" />
-                      </button>
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => openEditCategory(cat)} className="p-2 text-gray-400 hover:text-black transition-colors">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => deleteCategory(cat.id)} className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -1,11 +1,18 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
     <footer className="bg-black text-white py-20 mt-32">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-8">
         <div className="space-y-6 text-center md:text-left">
-          <h2 className="font-serif text-3xl">GeeGee</h2>
+          <Image 
+            src="/images/logo/logo.png" 
+            alt="GeeGee Designs" 
+            width={120} 
+            height={40} 
+            className="h-10 w-auto object-contain invert grayscale brightness-200"
+          />
           <p className="text-gray-400 text-sm max-w-xs mx-auto md:mx-0">
             Exquisite wedding gowns and traditional bridal wear, handcrafted in Tlokweng, Botswana.
           </p>

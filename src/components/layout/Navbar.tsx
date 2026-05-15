@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { User, Menu, MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Navbar() {
   const WHATSAPP_NUMBER = "26775402196";
@@ -21,18 +22,25 @@ export default function Navbar() {
         </div>
 
         <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-          <h1 className="font-serif text-3xl font-medium tracking-tight">GeeGee</h1>
+          <Image
+            src="/images/logo/logo.png"
+            alt="GeeGee Designs"
+            width={120}
+            height={40}
+            className="h-12 w-auto object-contain"
+            priority
+          />
         </Link>
 
         <div className="flex items-center gap-4">
-          <a 
-            href={`https://wa.me/${WHATSAPP_NUMBER}`} 
-            target="_blank" 
+          <a
+            href={`https://wa.me/${WHATSAPP_NUMBER}`}
+            target="_blank"
             rel="noopener noreferrer"
             className="hidden md:flex items-center gap-2 text-xs font-medium uppercase tracking-widest border border-black px-6 py-2.5 hover:bg-black hover:text-white transition-all duration-300"
           >
             <MessageCircle className="w-4 h-4" />
-            Book Consult
+            Book Consultation
           </a>
           <Link href="/admin" className="p-2 hover:bg-gray-50 rounded-full transition-colors" aria-label="Account">
             <User className="w-5 h-5" />

@@ -1,18 +1,53 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
 
 export default function About() {
+  const [images, setImages] = useState<{ [key: string]: string }>({
+    'about-hero': '/images/logo/logo.png', // Fallback, will replace with generated one if exists
+    'about-story-1': 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1000&auto=format&fit=crop',
+    'about-story-2': 'https://images.unsplash.com/photo-1605100804763-247f6612d54e?q=80&w=1000&auto=format&fit=crop'
+  });
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function fetchAboutImages() {
+      const { data } = await supabase
+        .from('site_banners')
+        .select('image_url, position')
+        .in('position', ['about-hero', 'about-story-1', 'about-story-2'])
+        .eq('is_active', true);
+
+      if (data) {
+        const imageMap = data.reduce((acc: any, curr: any) => {
+          acc[curr.position] = curr.image_url;
+          return acc;
+        }, {});
+        setImages(prev => ({ ...prev, ...imageMap }));
+      }
+    }
+    fetchAboutImages();
+  }, [supabase]);
+
+  // Use the generated hero image if available, otherwise use DB or fallback
+  const heroImage = images['about-hero'] === '/images/logo/logo.png' 
+    ? '/images/about-hero.png' 
+    : images['about-hero'];
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
       <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <Image 
-          src="https://images.unsplash.com/photo-1594552072238-18e38d78b9b8?q=80&w=2000&auto=format&fit=crop"
+          src={heroImage}
           alt="GeeGee Designs Studio"
           fill
           className="object-cover opacity-90"
+          priority
         />
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 text-center text-white px-4">
@@ -63,7 +98,7 @@ export default function About() {
               className="relative aspect-[4/5] bg-gray-100"
             >
               <Image 
-                src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1000&auto=format&fit=crop"
+                src={images['about-story-1']}
                 alt="Founder at work"
                 fill
                 className="object-cover"
@@ -80,7 +115,7 @@ export default function About() {
               className="relative aspect-[4/5] bg-gray-100 order-2 md:order-1"
             >
               <Image 
-                src="https://images.unsplash.com/photo-1605100804763-247f6612d54e?q=80&w=1000&auto=format&fit=crop"
+                src={images['about-story-2']}
                 alt="Details of craftsmanship"
                 fill
                 className="object-cover"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { UploadCloud, Plus, Trash2, Layout, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, Plus, Trash2, Layout, Image as ImageIcon, Pencil } from "lucide-react";
 import Image from "next/image";
 
 export default function SiteContentAdmin() {
@@ -11,6 +11,8 @@ export default function SiteContentAdmin() {
   const [isAddingHero, setIsAddingHero] = useState(false);
   const [isAddingBanner, setIsAddingBanner] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingHero, setEditingHero] = useState<any>(null);
+  const [editingBanner, setEditingBanner] = useState<any>(null);
 
   // Form states for Hero Slide
   const [heroTitle, setHeroTitle] = useState("");
@@ -54,24 +56,55 @@ export default function SiteContentAdmin() {
     return data.publicUrl;
   }
 
+  const openEditHero = (slide: any) => {
+    setEditingHero(slide);
+    setHeroTitle(slide.title);
+    setHeroSubtitle(slide.subtitle || "");
+    setHeroCtaText(slide.cta_text);
+    setHeroCtaLink(slide.cta_link);
+    setHeroFile(null);
+    setIsAddingHero(true);
+  };
+
+  const openEditBanner = (banner: any) => {
+    setEditingBanner(banner);
+    setBannerName(banner.name);
+    setBannerLink(banner.cta_link);
+    setBannerPosition(banner.position);
+    setBannerFile(null);
+    setIsAddingBanner(true);
+  };
+
   const handleAddHero = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!heroTitle || !heroFile) return;
+    if (!heroTitle || (!heroFile && !editingHero)) return;
     setIsSubmitting(true);
 
     try {
-      const imageUrl = await uploadFile(heroFile, 'product-media');
-      const { error } = await supabase.from('hero_slides').insert([{
+      let imageUrl = editingHero?.image_url;
+      if (heroFile) {
+        imageUrl = await uploadFile(heroFile, 'product-media');
+      }
+
+      const slideData = {
         title: heroTitle,
         subtitle: heroSubtitle,
         cta_text: heroCtaText,
         cta_link: heroCtaLink,
         image_url: imageUrl,
-        order_index: heroSlides.length
-      }]);
-      if (error) throw error;
+        order_index: editingHero ? editingHero.order_index : heroSlides.length
+      };
+
+      if (editingHero) {
+        const { error } = await supabase.from('hero_slides').update(slideData).eq('id', editingHero.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('hero_slides').insert([slideData]);
+        if (error) throw error;
+      }
       
       setIsAddingHero(false);
+      setEditingHero(null);
       setHeroTitle("");
       setHeroSubtitle("");
       setHeroFile(null);
@@ -85,21 +118,33 @@ export default function SiteContentAdmin() {
 
   const handleAddBanner = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bannerName || !bannerFile) return;
+    if (!bannerName || (!bannerFile && !editingBanner)) return;
     setIsSubmitting(true);
 
     try {
-      const imageUrl = await uploadFile(bannerFile, 'product-media');
-      const { error } = await supabase.from('site_banners').insert([{
+      let imageUrl = editingBanner?.image_url;
+      if (bannerFile) {
+        imageUrl = await uploadFile(bannerFile, 'product-media');
+      }
+
+      const bannerData = {
         name: bannerName,
         cta_link: bannerLink,
         position: bannerPosition,
         image_url: imageUrl,
         is_active: true
-      }]);
-      if (error) throw error;
+      };
+
+      if (editingBanner) {
+        const { error } = await supabase.from('site_banners').update(bannerData).eq('id', editingBanner.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('site_banners').insert([bannerData]);
+        if (error) throw error;
+      }
       
       setIsAddingBanner(false);
+      setEditingBanner(null);
       setBannerName("");
       setBannerFile(null);
       fetchContent();
@@ -139,6 +184,9 @@ export default function SiteContentAdmin() {
               <div className="aspect-[16/9] relative">
                 <Image src={slide.image_url} alt={slide.title} fill className="object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  <button onClick={() => openEditHero(slide)} className="p-3 bg-white text-black rounded-full hover:bg-gray-50 transition-colors">
+                    <Pencil className="w-5 h-5" />
+                  </button>
                   <button onClick={() => deleteItem('hero_slides', slide.id)} className="p-3 bg-white text-red-600 rounded-full hover:bg-red-50 transition-colors">
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -180,6 +228,9 @@ export default function SiteContentAdmin() {
               <div className="aspect-[21/9] relative">
                 <Image src={banner.image_url} alt={banner.name} fill className="object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  <button onClick={() => openEditBanner(banner)} className="p-3 bg-white text-black rounded-full hover:bg-gray-50 transition-colors">
+                    <Pencil className="w-5 h-5" />
+                  </button>
                   <button onClick={() => deleteItem('site_banners', banner.id)} className="p-3 bg-white text-red-600 rounded-full hover:bg-red-50 transition-colors">
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -210,7 +261,7 @@ export default function SiteContentAdmin() {
       {isAddingHero && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-xl p-8 shadow-2xl">
-            <h2 className="text-2xl font-serif mb-6">Add New Hero Slide</h2>
+            <h2 className="text-2xl font-serif mb-6">{editingHero ? "Edit Hero Slide" : "Add New Hero Slide"}</h2>
             <form onSubmit={handleAddHero} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Slide Title</label>
@@ -231,13 +282,14 @@ export default function SiteContentAdmin() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Background Image</label>
-                <input required type="file" accept="image/*" onChange={e => setHeroFile(e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800" />
+                <label className="text-sm font-medium text-gray-700">Background Image {editingHero && "(Optional)"}</label>
+                <input required={!editingHero} type="file" accept="image/*" onChange={e => setHeroFile(e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800" />
+                {editingHero && !heroFile && <p className="text-xs text-gray-400">Keeping current image. Upload new to change.</p>}
               </div>
               <div className="flex justify-end gap-4 pt-4">
-                <button type="button" onClick={() => setIsAddingHero(false)} className="px-6 py-2 text-sm font-medium text-gray-500 hover:text-black">Cancel</button>
+                <button type="button" onClick={() => { setIsAddingHero(false); setEditingHero(null); }} className="px-6 py-2 text-sm font-medium text-gray-500 hover:text-black">Cancel</button>
                 <button disabled={isSubmitting} type="submit" className="px-8 py-2 bg-black text-white rounded-lg text-sm font-medium disabled:opacity-50">
-                  {isSubmitting ? "Uploading..." : "Save Slide"}
+                  {isSubmitting ? "Processing..." : editingHero ? "Update Slide" : "Save Slide"}
                 </button>
               </div>
             </form>
@@ -249,7 +301,7 @@ export default function SiteContentAdmin() {
       {isAddingBanner && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-xl p-8 shadow-2xl">
-            <h2 className="text-2xl font-serif mb-6">Add New Banner</h2>
+            <h2 className="text-2xl font-serif mb-6">{editingBanner ? "Edit Banner" : "Add New Banner"}</h2>
             <form onSubmit={handleAddBanner} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Banner Name</label>
@@ -266,17 +318,21 @@ export default function SiteContentAdmin() {
                     <option value="middle">Home Middle</option>
                     <option value="bottom">Home Bottom</option>
                     <option value="shop-top">Shop Top</option>
+                    <option value="about-hero">About Hero</option>
+                    <option value="about-story-1">About Story 1</option>
+                    <option value="about-story-2">About Story 2</option>
                   </select>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Banner Image</label>
-                <input required type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800" />
+                <label className="text-sm font-medium text-gray-700">Banner Image {editingBanner && "(Optional)"}</label>
+                <input required={!editingBanner} type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800" />
+                {editingBanner && !bannerFile && <p className="text-xs text-gray-400">Keeping current image. Upload new to change.</p>}
               </div>
               <div className="flex justify-end gap-4 pt-4">
-                <button type="button" onClick={() => setIsAddingBanner(false)} className="px-6 py-2 text-sm font-medium text-gray-500 hover:text-black">Cancel</button>
+                <button type="button" onClick={() => { setIsAddingBanner(false); setEditingBanner(null); }} className="px-6 py-2 text-sm font-medium text-gray-500 hover:text-black">Cancel</button>
                 <button disabled={isSubmitting} type="submit" className="px-8 py-2 bg-black text-white rounded-lg text-sm font-medium disabled:opacity-50">
-                  {isSubmitting ? "Uploading..." : "Save Banner"}
+                  {isSubmitting ? "Processing..." : editingBanner ? "Update Banner" : "Save Banner"}
                 </button>
               </div>
             </form>

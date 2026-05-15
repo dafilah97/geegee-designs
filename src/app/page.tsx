@@ -158,9 +158,9 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { title: 'Wedding Gowns', image: 'https://images.unsplash.com/photo-1594552072238-18e38d78b9b8?q=80&w=1200&auto=format&fit=crop' },
-              { title: 'Traditional Wear', image: 'https://images.unsplash.com/photo-1605100804763-247f6612d54e?q=80&w=1200&auto=format&fit=crop' },
-              { title: 'Wedding Guests', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1200&auto=format&fit=crop' }
+              { title: 'Wedding Gowns', image: '/images/collections/wedding-gowns.png' },
+              { title: 'Traditional Wear', image: '/images/collections/traditional-wear.png' },
+              { title: 'Wedding Guests', image: '/images/collections/wedding-guests.png' }
             ].map((category, idx) => (
               <motion.div 
                 key={idx}
