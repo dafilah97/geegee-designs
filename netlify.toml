@@ -3,7 +3,7 @@
   publish = ".next"
 
 [site]
-  id = "74f17440-c081-4775-b256-89fc06a1a6bb"
+  id = "54ac76cf-a427-49e1-bb86-fd49e9da37e6"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
