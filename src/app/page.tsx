@@ -27,7 +27,6 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const supabase = createClient();
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"]
@@ -36,15 +35,16 @@ export default function Home() {
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   useEffect(() => {
+    const supabase = createClient();
     async function fetchContent() {
       const { data: slides } = await supabase.from('hero_slides').select('*').order('order_index');
       if (slides && slides.length > 0) setHeroSlides(slides);
-      
+
       const { data: bns } = await supabase.from('site_banners').select('*').eq('is_active', true);
       if (bns) setBanners(bns);
     }
     fetchContent();
-  }, [supabase]);
+  }, []);
 
   // Auto-slide hero
   useEffect(() => {

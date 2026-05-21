@@ -12,32 +12,31 @@ export default function Shop() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
 
-  const supabase = createClient();
-
   useEffect(() => {
+    const supabase = createClient();
     async function fetchData() {
       setIsLoading(true);
-      
+
       const { data: cats } = await supabase.from('categories').select('*').order('name');
       if (cats) setCategories(cats);
 
       let query = supabase.from('products').select('*, category:categories(name, slug)').eq('status', 'published');
-      
+
       if (activeCategory !== 'All') {
         const selectedCat = cats?.find(c => c.slug === activeCategory || c.name === activeCategory);
         if (selectedCat) {
           query = query.eq('category_id', selectedCat.id);
         }
       }
-      
+
       const { data: prods } = await query;
       if (prods) setProducts(prods);
-      
+
       setIsLoading(false);
     }
 
     fetchData();
-  }, [activeCategory, supabase]);
+  }, [activeCategory]);
 
   return (
     <div className="container mx-auto px-4 py-16 md:py-24">
