@@ -14,7 +14,7 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://geegee-designs.netlify.app'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://geegeedesigns.vercel.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
